@@ -1,4 +1,5 @@
 <!doctype html><html lang="es"><head><meta charset="utf-8"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}img{max-width:100%}</style>
+<script>try { const t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; } catch (e) {}</script>
 <title>Leonardo Melo</title>
 <meta name="description" content="Leonardo Melo, compositor y pianista: música original para cine, documental y videojuegos.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -8,20 +9,21 @@
 <body>
 <style>
 /* Layout: a darkened screening room; the name sits on a five-line staff, sections divided by the staff. Tokens from the "Leonardo Melo" design system. */
+/* light-dark(claro, oscuro) sigue al sistema; data-theme en <html> lo fija a mano. */
 :root {
-  color-scheme: dark;
-  --bg:#0f0e0c; --surface:#1a1814; --surface-raised:#25221d; --ink:#f1ebe0; --ink-muted:#a39b8e;
-  --hairline:#332f28; --border:#6f665a; --amber:#e3a857; --on-amber:#1a1208; --paramo:#93b28a;
+  color-scheme: light dark;
+  --bg:light-dark(#f3eee5, #0f0e0c); --surface:light-dark(#fbf8f2, #1a1814); --surface-raised:light-dark(#e8e1d4, #25221d);
+  --ink:light-dark(#1b1814, #f1ebe0); --ink-muted:light-dark(#5e564b, #a39b8e); --hairline:light-dark(#d9d0c2, #332f28);
+  --border:light-dark(#857b6d, #6f665a); --amber:light-dark(#9a5b14, #e3a857); --on-amber:light-dark(#fffaf2, #1a1208);
+  --paramo:light-dark(#3f5a3a, #93b28a);
   --font-display:"Instrument Serif","Iowan Old Style",Georgia,serif;
   --font-sans:"Instrument Sans",system-ui,sans-serif;
   --font-mono:"JetBrains Mono",ui-monospace,monospace;
   --space-1:4px; --space-2:8px; --space-3:16px; --space-4:24px; --space-5:48px; --space-6:96px;
   --radius-sm:2px; --radius-pill:999px;
 }
-@media (prefers-color-scheme: light) { :root {
-  color-scheme: light;
-  --bg:#f3eee5; --surface:#fbf8f2; --surface-raised:#e8e1d4; --ink:#1b1814; --ink-muted:#5e564b;
-  --hairline:#d9d0c2; --border:#857b6d; --amber:#9a5b14; --on-amber:#fffaf2; --paramo:#3f5a3a; } }
+:root[data-theme="light"] { color-scheme:light; }
+:root[data-theme="dark"] { color-scheme:dark; }
 
 body { background:var(--bg); color:var(--ink); font:400 17px/27px var(--font-sans); margin:0; }
 .wrap { max-width:1120px; margin:0 auto; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
@@ -49,6 +51,8 @@ body::before { content:""; position:fixed; inset:0 0 auto; height:env(safe-area-
 .nav__end { display:flex; align-items:center; gap:var(--space-3); }
 .lang { font:400 12px/16px var(--font-mono); letter-spacing:.08em; background:none; color:var(--ink); border:1px solid var(--border); border-radius:var(--radius-pill); padding:var(--space-2) var(--space-3); cursor:pointer; }
 .lang:hover { border-color:var(--amber); color:var(--amber); }
+.theme { display:inline-flex; padding:var(--space-2); }
+.theme svg { width:16px; height:16px; fill:currentColor; }
 @media (max-width:720px) { .nav__links { display:none; } }
 
 /* Hero: the name on a staff */
@@ -157,7 +161,8 @@ footer.site .wrap { display:flex; justify-content:space-between; gap:var(--space
       <li><a href="#sobre-mi" data-en="About">Sobre mí</a></li>
       <li><a href="#escuchar" data-en="Listen">Escuchar</a></li>
     </ul>
-    <div class="nav__end"><button class="lang" id="lang" type="button" aria-label="Switch to English">EN</button>
+    <div class="nav__end"><button class="lang theme" id="theme" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill-rule="evenodd" d="M12 2a10 10 0 1 1 0 20 10 10 0 0 1 0-20zm0 2a8 8 0 0 0 0 16z"/></svg></button>
+    <button class="lang" id="lang" type="button" aria-label="Switch to English">EN</button>
     <a class="btn btn--secondary" href="#hablemos" data-en="Let's talk">Hablemos</a></div>
   </div>
 </nav>
@@ -397,9 +402,29 @@ function setLang(next) {
   const btn = document.getElementById('lang');
   btn.textContent = next === 'en' ? 'ES' : 'EN';
   btn.setAttribute('aria-label', next === 'en' ? 'Cambiar a español' : 'Switch to English');
+  labelTheme();
   document.getElementById('sent').textContent = '';
   try { localStorage.setItem('lang', next); } catch (e) {}
 }
+const systemDark = matchMedia('(prefers-color-scheme: dark)');
+const root = document.documentElement;
+const isDark = () => (root.dataset.theme || (systemDark.matches ? 'dark' : 'light')) === 'dark';
+function labelTheme() {
+  const b = document.getElementById('theme');
+  const label = isDark()
+    ? (lang === 'en' ? 'Switch to light mode' : 'Cambiar a modo claro')
+    : (lang === 'en' ? 'Switch to dark mode' : 'Cambiar a modo oscuro');
+  b.setAttribute('aria-label', label);
+  b.title = label;
+}
+document.getElementById('theme').addEventListener('click', () => {
+  root.dataset.theme = isDark() ? 'light' : 'dark';
+  try { localStorage.setItem('theme', root.dataset.theme); } catch (e) {}
+  labelTheme();
+});
+systemDark.addEventListener('change', labelTheme);
+labelTheme();
+
 document.getElementById('lang').addEventListener('click', () => setLang(lang === 'es' ? 'en' : 'es'));
 let saved = null;
 try { saved = localStorage.getItem('lang'); } catch (e) {}
