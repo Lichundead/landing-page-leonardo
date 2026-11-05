@@ -1,0 +1,51 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one deploy at a time; a newer push replaces a queued one.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Check that every local image exists
+        run: |
+          missing=0
+          for src in $(grep -o 'src="img/[^"]*"' index.html | cut -d'"' -f2); do
+            [ -f "$src" ] || { echo "Missing: $src"; missing=1; }
+          done
+          exit $missing
+
+      # Publish only the site, not .claude/, .github/ or the README.
+      - name: Collect site files
+        run: |
+          mkdir _site
+          cp -r index.html img _site/
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
