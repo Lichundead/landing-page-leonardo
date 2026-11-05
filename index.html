@@ -404,7 +404,6 @@ function setLang(next) {
   btn.setAttribute('aria-label', next === 'en' ? 'Cambiar a español' : 'Switch to English');
   labelTheme();
   document.getElementById('sent').textContent = '';
-  try { localStorage.setItem('lang', next); } catch (e) {}
 }
 const systemDark = matchMedia('(prefers-color-scheme: dark)');
 const root = document.documentElement;
@@ -425,10 +424,15 @@ document.getElementById('theme').addEventListener('click', () => {
 systemDark.addEventListener('change', labelTheme);
 labelTheme();
 
-document.getElementById('lang').addEventListener('click', () => setLang(lang === 'es' ? 'en' : 'es'));
-let saved = null;
-try { saved = localStorage.getItem('lang'); } catch (e) {}
-if (saved === 'en' || (!saved && !/^es/i.test(navigator.language || 'es'))) setLang('en');
+// Same rule as the theme: follow the browser until the visitor picks a language with the button.
+const browserLang = () => /^es/i.test(navigator.language || 'es') ? 'es' : 'en';
+const savedLang = () => { try { const s = localStorage.getItem('lang'); return s === 'es' || s === 'en' ? s : null; } catch (e) { return null; } };
+document.getElementById('lang').addEventListener('click', () => {
+  setLang(lang === 'es' ? 'en' : 'es');
+  try { localStorage.setItem('lang', lang); } catch (e) {}
+});
+addEventListener('languagechange', () => { if (!savedLang() && browserLang() !== lang) setLang(browserLang()); });
+if ((savedLang() || browserLang()) === 'en') setLang('en');
 
 const releases = document.querySelectorAll('.release');
 releases.forEach(b => b.addEventListener('click', () => {
